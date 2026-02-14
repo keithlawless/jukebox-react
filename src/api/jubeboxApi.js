@@ -17,7 +17,17 @@ async function fetchJson(path, options = {}) {
   if (!response.ok) {
     throw new Error(`Request failed for ${path} (${response.status})`);
   }
-  return response.json();
+
+  if (response.status === 204 || response.status === 205) {
+    return null;
+  }
+
+  const bodyText = await response.text();
+  if (!bodyText) {
+    return null;
+  }
+
+  return JSON.parse(bodyText);
 }
 
 function sortByName(items) {
@@ -50,7 +60,7 @@ function buildSongMrl(albumMrl, fileValue) {
   }
 
   const cleanAlbumMrl = albumMrl.endsWith('/') ? albumMrl : `${albumMrl}/`;
-  return `${cleanAlbumMrl}${encodeURIComponent(safeDecode(fileValue))}`;
+  return `${cleanAlbumMrl}${safeDecode(fileValue)}`;
 }
 
 async function getFolderListing(entryPoint = '') {
@@ -90,18 +100,15 @@ export async function getSongsByAlbum(album) {
 }
 
 export async function addSongToQueue(song) {
-  await fetchJson('/api/queue/add', {
+  const normalizedMrl = safeDecode(song.mrl ?? song.id ?? '');
+  await fetchJson(`/api/queue/add?mrl=${encodeURIComponent(normalizedMrl)}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ mrl: song.mrl ?? song.id }),
   });
 }
 
 export async function getQueueState() {
   const payload = await fetchJson('/api/queue/list');
-  const queue = Array.isArray(payload.queue) ? payload.queue : [];
+  const queue = Array.isArray(payload?.queue) ? payload.queue : [];
 
   return queue.map((item, index) => ({
     id: item.mrl ?? item.title ?? `queue-${index}`,
