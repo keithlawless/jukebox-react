@@ -1,0 +1,22 @@
+Create a new React application called jubebox-react in this directory
+
+This will be a web application that lists songs sorted by artist and album and allows the user to 
+add those songs to a queue to be played.
+
+The business logic is accessed via a REST API described using Swagger at http://localhost:8080/api/swagger-ui/index.html
+
+The first screen should show a list of artists sorted alphabetically. A vertical scrollbar should be used 
+to navigate the list. 
+
+When an artist is clicked, the screen should show a list of albums for that artist sorted alphabetically. 
+A vertical scrollbar should be used to navigate the list. 
+
+When an album is clicked, the screen should show a list of songs for that album sorted alphabetically. 
+A vertical scrollbar should be used to navigate the list. 
+
+All vertical scrollbars should have tooltip showing the first letter of the current item in the list to allow for rapid scrolling.
+
+When a song is clicked, the song should be added to the queue. The queue should be displayed in a 
+separate page of the application reached via a top menu. The queue should show the current song
+being played, followed by a scrollable list of upcoming songs. 
+

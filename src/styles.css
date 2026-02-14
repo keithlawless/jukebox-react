@@ -1,0 +1,265 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg: #f4f1e7;
+  --card: #fffdf6;
+  --ink: #1f2a2e;
+  --accent: #126b64;
+  --accent-soft: #d9efe8;
+  --error: #8f1e35;
+  --line: #d7d1bf;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 100% 0%, #f8efe0 0%, transparent 42%),
+    radial-gradient(circle at 0% 100%, #deefe8 0%, transparent 45%),
+    var(--bg);
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 253, 246, 0.92);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.top-nav h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.top-nav nav {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.top-nav a {
+  text-decoration: none;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  font-weight: 600;
+}
+
+.top-nav a.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: #0e554f;
+}
+
+.page-content {
+  padding: 1rem 1.2rem 1.5rem;
+}
+
+.helper-text {
+  margin-top: 0;
+  color: #3d4f54;
+}
+
+.error-banner {
+  border: 1px solid #df9fb0;
+  color: var(--error);
+  background: #fbe8ee;
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+}
+
+.columns-layout {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.list-column {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  padding: 0.6rem;
+  min-height: 62vh;
+}
+
+.list-column h2 {
+  margin: 0.3rem 0.3rem 0.7rem;
+  font-size: 1rem;
+}
+
+.scroll-area-wrapper {
+  position: relative;
+  height: calc(62vh - 48px);
+}
+
+.scroll-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow-y: auto;
+  border-radius: 10px;
+  border: 1px solid #ece6d4;
+}
+
+.scroll-list li {
+  margin: 0;
+}
+
+.list-item-button {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #efe8d8;
+  background: transparent;
+  text-align: left;
+  padding: 0.7rem 0.75rem;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.list-item-button:hover,
+.list-item-button.selected {
+  background: var(--accent-soft);
+}
+
+.empty-row {
+  color: #617176;
+  padding: 0.8rem;
+}
+
+.scroll-tooltip {
+  position: absolute;
+  right: 0.6rem;
+  top: 0.6rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(18, 107, 100, 0.86);
+  pointer-events: none;
+}
+
+.queue-page {
+  max-width: 860px;
+  margin: 0 auto;
+  display: grid;
+  gap: 1rem;
+}
+
+.queue-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.queue-header-row h2 {
+  margin: 0;
+}
+
+.queue-actions {
+  display: flex;
+  gap: 0.55rem;
+}
+
+button {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.current-song-card,
+.upcoming-songs-section {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem;
+  background: var(--card);
+}
+
+.current-song-card h3,
+.upcoming-songs-section h3 {
+  margin-top: 0;
+}
+
+.song-name {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.song-meta {
+  margin: 0.35rem 0 0;
+  color: #4a5f64;
+}
+
+.empty-text {
+  margin: 0;
+  color: #617176;
+}
+
+.upcoming-songs-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.upcoming-song-row {
+  border-bottom: 1px solid #ece6d4;
+  padding: 0.7rem 0;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.upcoming-song-row small {
+  color: #566a70;
+}
+
+@media (max-width: 900px) {
+  .columns-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .list-column {
+    min-height: 38vh;
+  }
+
+  .scroll-area-wrapper {
+    height: calc(38vh - 48px);
+  }
+}
