@@ -6,7 +6,7 @@ function App() {
   return (
     <div className="app-shell">
       <header className="top-nav">
-        <h1>Jubebox</h1>
+        <h1>Jukebox</h1>
         <nav>
           <NavLink to="/browse" className={({ isActive }) => (isActive ? 'active' : '')}>
             Browse
