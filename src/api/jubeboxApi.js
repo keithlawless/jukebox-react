@@ -150,6 +150,64 @@ export async function getQueueState() {
   }));
 }
 
+export async function getRadioStations() {
+  const payload = await fetchJson('/api/radio/list');
+  const stationList = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload?.stations)
+      ? payload.stations
+      : [];
+
+  const normalizedStations = stationList
+    .map((station, index) => {
+      if (typeof station === 'string') {
+        const mrl = safeDecode(station);
+        return {
+          id: mrl || `radio-${index}`,
+          mrl,
+          name: decodeMrlName(mrl) || `Station ${index + 1}`,
+        };
+      }
+
+      const mrl = safeDecode(station?.mrl ?? station?.id ?? station?.url ?? '');
+      if (!mrl) {
+        return null;
+      }
+
+      return {
+        id: mrl,
+        mrl,
+        name: station?.description ?? station?.title ?? station?.name ?? (decodeMrlName(mrl) || `Station ${index + 1}`),
+      };
+    })
+    .filter(Boolean);
+
+  return sortByName(normalizedStations);
+}
+
+export async function playRadioStation(station) {
+  const normalizedMrl = safeDecode(station?.mrl ?? station?.id ?? '');
+  if (!normalizedMrl) {
+    throw new Error('Missing station MRL for radio play action');
+  }
+
+  await fetchJson('/api/radio/play', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      mrl: normalizedMrl,
+    }),
+  });
+}
+
+export async function stopRadioStation() {
+  await fetchJson('/api/radio/stop', {
+    method: 'POST',
+  });
+}
+
 export async function getCurrentSong() {
   const snapshot = await getCurrentSongAndProgress();
   return snapshot.song;
@@ -412,11 +470,7 @@ export async function mediaNextSong() {
 }
 
 export async function mediaEmptyQueue() {
-  await requestFirstAvailable([
-    '/api/media/empty-queue',
-    '/api/media/emptyQueue',
-    '/api/media/clear-queue',
-    '/api/media/clearQueue',
-    '/api/media/empty',
-  ]);
+  await fetchJson('/api/queue/empty', {
+    method: 'POST',
+  });
 }

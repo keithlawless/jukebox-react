@@ -4,6 +4,7 @@ import packageJson from '../package.json';
 import { getApiVersion } from './api/jubeboxApi';
 import BrowsePage from './pages/BrowsePage';
 import QueuePage from './pages/QueuePage';
+import RadioPage from './pages/RadioPage';
 
 function App() {
   const [apiVersion, setApiVersion] = useState('loading...');
@@ -34,11 +35,14 @@ function App() {
         <h1>Jukebox</h1>
         <div className="top-nav-meta">
           <nav>
+            <NavLink to="/queue" className={({ isActive }) => (isActive ? 'active' : '')}>
+              Queue
+            </NavLink>
             <NavLink to="/browse" className={({ isActive }) => (isActive ? 'active' : '')}>
               Browse
             </NavLink>
-            <NavLink to="/queue" className={({ isActive }) => (isActive ? 'active' : '')}>
-              Queue
+            <NavLink to="/radio" className={({ isActive }) => (isActive ? 'active' : '')}>
+              Radio
             </NavLink>
           </nav>
           <div className="version-badges">
@@ -50,9 +54,10 @@ function App() {
 
       <main className="page-content">
         <Routes>
-          <Route path="/" element={<Navigate to="/browse" replace />} />
+          <Route path="/" element={<Navigate to="/queue" replace />} />
           <Route path="/browse" element={<BrowsePage />} />
           <Route path="/queue" element={<QueuePage />} />
+          <Route path="/radio" element={<RadioPage />} />
         </Routes>
       </main>
     </div>

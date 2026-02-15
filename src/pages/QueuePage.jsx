@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   getCurrentSongAndProgress,
   getQueueState,
+  getRadioStations,
   getSongArtworkUrl,
   mediaEmptyQueue,
   mediaNextSong,
@@ -23,6 +24,18 @@ function formatClockTime(totalSeconds) {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
+function normalizeMrlForCompare(mrl) {
+  if (typeof mrl !== 'string') {
+    return '';
+  }
+
+  try {
+    return decodeURIComponent(mrl).trim();
+  } catch {
+    return mrl.trim();
+  }
+}
+
 function QueuePage() {
   const [currentSong, setCurrentSong] = useState(null);
   const [queueSongs, setQueueSongs] = useState([]);
@@ -32,6 +45,7 @@ function QueuePage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
   const [artworkUnavailable, setArtworkUnavailable] = useState(false);
+  const [internetRadioDescription, setInternetRadioDescription] = useState('');
 
   const upcomingSongs = useMemo(() => {
     if (!currentSong) {
@@ -63,9 +77,13 @@ function QueuePage() {
   const progressCurrentSeconds = currentProgress?.currentSeconds ?? 0;
   const progressDurationSeconds = currentProgress?.durationSeconds ?? 0;
   const playState = currentSong?.playState ?? 'STOPPED';
+  const isInternetRadio = (currentSong?.artistName ?? '').trim().toLowerCase() === 'internet radio';
   const isPlaying = playState === 'PLAYING';
   const isPaused = playState === 'PAUSED';
   const isStopped = !currentSong || playState === 'STOPPED';
+  const currentSongDisplayName = isInternetRadio && internetRadioDescription
+    ? internetRadioDescription
+    : currentSong?.name;
 
   const loadQueueData = async (showLoading = true) => {
     if (showLoading) {
@@ -126,6 +144,43 @@ function QueuePage() {
     };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!currentSong || !isInternetRadio) {
+      setInternetRadioDescription('');
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const loadInternetRadioDescription = async () => {
+      try {
+        const stations = await getRadioStations();
+        if (!isMounted) {
+          return;
+        }
+
+        const currentMrl = normalizeMrlForCompare(currentSong.mrl);
+        const matchedStation = stations.find((station) => (
+          normalizeMrlForCompare(station.mrl) === currentMrl
+        ));
+
+        setInternetRadioDescription(matchedStation?.name ?? currentSong.name ?? '');
+      } catch {
+        if (isMounted) {
+          setInternetRadioDescription(currentSong.name ?? '');
+        }
+      }
+    };
+
+    loadInternetRadioDescription();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentSong, isInternetRadio]);
+
   return (
     <div className="queue-page">
       <div className="queue-header-row">
@@ -163,19 +218,21 @@ function QueuePage() {
               </div>
             )}
             <div>
-              <p className="song-name">{currentSong.name}</p>
+              <p className="song-name">{currentSongDisplayName}</p>
               <p className="song-meta">
                 {currentSong.artistName || 'Unknown Artist'} · {currentSong.albumName || 'Unknown Album'}
               </p>
-              <div className="song-progress" aria-label="Song progress">
-                <div className="song-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progressPercent)}>
-                  <div className="song-progress-fill" style={{ width: `${progressPercent}%` }} />
+              {isInternetRadio ? null : (
+                <div className="song-progress" aria-label="Song progress">
+                  <div className="song-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progressPercent)}>
+                    <div className="song-progress-fill" style={{ width: `${progressPercent}%` }} />
+                  </div>
+                  <div className="song-progress-times">
+                    <span>{formatClockTime(progressCurrentSeconds)}</span>
+                    <span>{progressDurationSeconds > 0 ? formatClockTime(progressDurationSeconds) : '--:--'}</span>
+                  </div>
                 </div>
-                <div className="song-progress-times">
-                  <span>{formatClockTime(progressCurrentSeconds)}</span>
-                  <span>{progressDurationSeconds > 0 ? formatClockTime(progressDurationSeconds) : '--:--'}</span>
-                </div>
-              </div>
+              )}
               <div className="now-playing-actions">
                 {isPaused ? (
                   <button

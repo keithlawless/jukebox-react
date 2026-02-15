@@ -194,6 +194,42 @@ body {
   gap: 1rem;
 }
 
+.radio-page {
+  max-width: 860px;
+  margin: 0 auto;
+  display: grid;
+  gap: 1rem;
+}
+
+.radio-page h2 {
+  margin: 0;
+}
+
+.radio-stations-section {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem;
+  background: var(--card);
+}
+
+.radio-stations-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.radio-station-row {
+  border: 1px solid #ece6d4;
+  border-radius: 10px;
+  padding: 0.55rem 0.65rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.7rem;
+}
+
 .queue-header-row {
   display: flex;
   justify-content: space-between;
