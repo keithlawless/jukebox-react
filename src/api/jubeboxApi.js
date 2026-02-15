@@ -120,19 +120,8 @@ export async function getQueueState() {
 }
 
 export async function getCurrentSong() {
-  const item = await fetchJson('/api/queue/playing');
-
-  if (!item || !item.mrl) {
-    return null;
-  }
-
-  return {
-    id: item.mrl,
-    mrl: item.mrl,
-    name: item.title ?? decodeMrlName(item.mrl),
-    artistName: item.artist ?? 'Unknown Artist',
-    albumName: item.album ?? 'Unknown Album',
-  };
+  const snapshot = await getCurrentSongAndProgress();
+  return snapshot.song;
 }
 
 export async function getApiVersion() {
@@ -204,78 +193,119 @@ function toSeconds(value) {
   return numeric > 10000 ? numeric / 1000 : numeric;
 }
 
-function pickProgressSource(payload) {
+function pickProgressSources(payload) {
   if (!payload || typeof payload !== 'object') {
-    return null;
+    return [];
   }
 
-  return (
-    payload.tag
-    ?? payload.data
-    ?? payload.nowPlaying
-    ?? payload.current
-    ?? payload
-  );
+  return [
+    payload,
+    payload.playing,
+    payload.tag,
+    payload.data,
+    payload.nowPlaying,
+    payload.current,
+  ].filter((item) => item && typeof item === 'object');
 }
 
-export async function getCurrentSongProgress(song) {
-  const normalizedMrl = safeDecode(song?.mrl ?? song?.id ?? '');
-  if (!normalizedMrl) {
-    return null;
-  }
-
-  const payload = await fetchJson(`/api/tag/read?mrl=${encodeURIComponent(normalizedMrl)}`, {
-    cache: 'no-store',
-  });
-
-  const source = pickProgressSource(payload);
-  if (!source) {
-    return null;
-  }
-
-  const durationRaw = pickFiniteNumber(
-    source.durationSeconds,
-    source.duration,
-    source.durationMs,
-    source.lengthSeconds,
-    source.length,
-    source.lengthMs,
-    source.totalSeconds,
-    source.total,
-    source.totalMs,
-    source.trackLength,
-    source.trackLengthMs,
-    source.trackDuration,
-    source.trackDurationMs,
-  );
-
-  const currentRaw = pickFiniteNumber(
-    source.currentSeconds,
-    source.current,
-    source.currentMs,
-    source.currentTime,
-    source.positionSeconds,
-    source.position,
-    source.positionMs,
-    source.elapsedSeconds,
-    source.elapsed,
-    source.elapsedMs,
-    source.progressSeconds,
-    source.progress,
-    source.progressMs,
-    source.time,
-    source.timeMs,
-  );
-
-  const durationSeconds = toSeconds(durationRaw);
-  const currentSeconds = toSeconds(currentRaw);
-
-  if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+function normalizeCurrentSong(item) {
+  if (!item || !item.mrl) {
     return null;
   }
 
   return {
-    currentSeconds: Math.min(Number.isFinite(currentSeconds) ? currentSeconds : 0, durationSeconds),
-    durationSeconds,
+    id: item.mrl,
+    mrl: item.mrl,
+    name: item.title ?? decodeMrlName(item.mrl),
+    artistName: item.artist ?? 'Unknown Artist',
+    albumName: item.album ?? 'Unknown Album',
   };
+}
+
+function normalizeCurrentSongProgress(payload) {
+  const sources = pickProgressSources(payload);
+
+  for (const source of sources) {
+    const durationRaw = pickFiniteNumber(
+      source.durationSeconds,
+      source.duration,
+      source.durationMs,
+      source.lengthSeconds,
+      source.length,
+      source.lengthMs,
+      source.totalSeconds,
+      source.total,
+      source.totalMs,
+      source.trackLength,
+      source.trackLengthMs,
+      source.trackDuration,
+      source.trackDurationMs,
+    );
+
+    const currentRaw = pickFiniteNumber(
+      source.currentSeconds,
+      source.current,
+      source.currentMs,
+      source.currentTime,
+      source.elapsedTime,
+      source.elapsedTimeMs,
+      source.positionSeconds,
+      source.positionMs,
+      source.elapsedSeconds,
+      source.elapsed,
+      source.elapsedMs,
+      source.progressSeconds,
+      source.progressMs,
+      source.time,
+      source.timeMs,
+    );
+
+    const durationSeconds = toSeconds(durationRaw);
+    let currentSeconds = toSeconds(currentRaw);
+
+    if (!Number.isFinite(currentSeconds) && Number.isFinite(durationSeconds) && durationSeconds > 0) {
+      const ratioRaw = pickFiniteNumber(
+        source.position,
+        source.progress,
+        source.positionRatio,
+        source.progressRatio,
+        source.positionPercent,
+        source.progressPercent,
+      );
+
+      if (Number.isFinite(ratioRaw)) {
+        const normalizedRatio = ratioRaw > 1 && ratioRaw <= 100 ? ratioRaw / 100 : ratioRaw;
+        if (normalizedRatio >= 0 && normalizedRatio <= 1) {
+          currentSeconds = normalizedRatio * durationSeconds;
+        }
+      }
+    }
+
+    if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+      continue;
+    }
+
+    return {
+      currentSeconds: Math.min(Number.isFinite(currentSeconds) ? currentSeconds : 0, durationSeconds),
+      durationSeconds,
+    };
+  }
+
+  return null;
+}
+
+export async function getCurrentSongAndProgress() {
+  const payload = await fetchJson('/api/queue/playing', {
+    cache: 'no-store',
+  });
+
+  return {
+    song: normalizeCurrentSong(payload),
+    progress: normalizeCurrentSongProgress(payload),
+  };
+}
+
+export async function getCurrentSongProgress() {
+  const snapshot = await getCurrentSongAndProgress();
+  return snapshot.progress;
 }

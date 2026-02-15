@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  getCurrentSong,
-  getCurrentSongProgress,
+  getCurrentSongAndProgress,
   getQueueState,
   getSongArtworkUrl,
 } from '../api/jubeboxApi';
@@ -21,8 +20,6 @@ function QueuePage() {
   const [currentSong, setCurrentSong] = useState(null);
   const [queueSongs, setQueueSongs] = useState([]);
   const [currentProgress, setCurrentProgress] = useState(null);
-  const [progressSnapshotAt, setProgressSnapshotAt] = useState(0);
-  const [displayTick, setDisplayTick] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [artworkUnavailable, setArtworkUnavailable] = useState(false);
@@ -51,34 +48,19 @@ function QueuePage() {
       return 0;
     }
 
-    const elapsedSeconds = Math.max(0, (displayTick - progressSnapshotAt) / 1000);
-    const liveCurrentSeconds = Math.min(
-      currentProgress.currentSeconds + elapsedSeconds,
-      currentProgress.durationSeconds,
-    );
+    return Math.min(100, (currentProgress.currentSeconds / currentProgress.durationSeconds) * 100);
+  }, [currentProgress]);
 
-    return Math.min(100, (liveCurrentSeconds / currentProgress.durationSeconds) * 100);
-  }, [currentProgress, displayTick, progressSnapshotAt]);
-
-  const progressCurrentSeconds = useMemo(() => {
-    if (!currentProgress) {
-      return 0;
-    }
-
-    const elapsedSeconds = Math.max(0, (displayTick - progressSnapshotAt) / 1000);
-    return Math.min(currentProgress.currentSeconds + elapsedSeconds, currentProgress.durationSeconds);
-  }, [currentProgress, displayTick, progressSnapshotAt]);
+  const progressCurrentSeconds = currentProgress?.currentSeconds ?? 0;
   const progressDurationSeconds = currentProgress?.durationSeconds ?? 0;
 
-  const loadProgressData = async () => {
+  const loadNowPlayingData = async () => {
     try {
-      const progress = await getCurrentSongProgress(currentSong);
-      setCurrentProgress(progress);
-      setProgressSnapshotAt(Date.now());
-      setDisplayTick(Date.now());
+      const snapshot = await getCurrentSongAndProgress();
+      setCurrentSong(snapshot.song);
+      setCurrentProgress(snapshot.progress);
     } catch {
       setCurrentProgress(null);
-      setProgressSnapshotAt(0);
     }
   };
 
@@ -87,10 +69,11 @@ function QueuePage() {
     setError('');
 
     try {
-      const [playing, queue] = await Promise.all([getCurrentSong(), getQueueState()]);
-      setCurrentSong(playing);
+      const [snapshot, queue] = await Promise.all([getCurrentSongAndProgress(), getQueueState()]);
+      setCurrentSong(snapshot.song);
+      setCurrentProgress(snapshot.progress);
       setQueueSongs(queue);
-      if (!playing) {
+      if (!snapshot.song) {
         setCurrentProgress(null);
       }
     } catch (loadError) {
@@ -105,36 +88,19 @@ function QueuePage() {
   }, []);
 
   useEffect(() => {
-    if (!currentSong) {
+    if (!currentSong?.mrl) {
       setCurrentProgress(null);
-      setProgressSnapshotAt(0);
       return;
     }
 
-    loadProgressData();
-
     const intervalId = window.setInterval(() => {
-      loadProgressData();
+      loadNowPlayingData();
     }, 5000);
 
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [currentSong]);
-
-  useEffect(() => {
-    if (!currentSong || !currentProgress) {
-      return;
-    }
-
-    const tickId = window.setInterval(() => {
-      setDisplayTick(Date.now());
-    }, 1000);
-
-    return () => {
-      window.clearInterval(tickId);
-    };
-  }, [currentSong, currentProgress]);
+  }, [currentSong?.mrl]);
 
   return (
     <div className="queue-page">
