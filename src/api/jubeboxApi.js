@@ -69,6 +69,29 @@ async function getFolderListing(entryPoint = '') {
   return fetchJson(`/api/folder/list${query}`);
 }
 
+async function getTagForMrl(mrl) {
+  const normalizedMrl = safeDecode(mrl);
+  if (!normalizedMrl) {
+    return null;
+  }
+
+  return fetchJson(`/api/tag/read?mrl=${encodeURIComponent(normalizedMrl)}`);
+}
+
+function getFriendlySongTitle(tagPayload, fallbackName) {
+  if (!tagPayload || typeof tagPayload !== 'object') {
+    return fallbackName;
+  }
+
+  const source = tagPayload.tag ?? tagPayload.data ?? tagPayload;
+  const title = source?.title;
+  if (typeof title === 'string' && title.trim()) {
+    return title.trim();
+  }
+
+  return fallbackName;
+}
+
 export async function getArtists() {
   const folder = await getFolderListing();
   const artists = (folder.folders ?? []).map((mrl, index) => normalizeFolderItem(mrl, index, 'Artist'));
@@ -85,16 +108,24 @@ export async function getSongsByAlbum(album) {
   const albumMrl = album.mrl ?? album.id;
   const folder = await getFolderListing(albumMrl);
 
-  const songs = (folder.files ?? []).map((fileValue, index) => {
+  const songs = await Promise.all((folder.files ?? []).map(async (fileValue, index) => {
     const id = buildSongMrl(albumMrl, fileValue);
     const baseName = decodeMrlName(fileValue) || decodeMrlName(id) || `Song ${index + 1}`;
 
+    let friendlyName = baseName;
+    try {
+      const tagPayload = await getTagForMrl(id);
+      friendlyName = getFriendlySongTitle(tagPayload, baseName);
+    } catch {
+      friendlyName = baseName;
+    }
+
     return {
       id,
-      name: baseName,
+      name: friendlyName,
       mrl: id,
     };
-  });
+  }));
 
   return sortByName(songs);
 }
@@ -213,12 +244,16 @@ function normalizeCurrentSong(item) {
     return null;
   }
 
+  const rawPlayState = typeof item.playState === 'string' ? item.playState : '';
+  const playState = rawPlayState.toUpperCase();
+
   return {
     id: item.mrl,
     mrl: item.mrl,
     name: item.title ?? decodeMrlName(item.mrl),
     artistName: item.artist ?? 'Unknown Artist',
     albumName: item.album ?? 'Unknown Album',
+    playState,
   };
 }
 
@@ -308,4 +343,80 @@ export async function getCurrentSongAndProgress() {
 export async function getCurrentSongProgress() {
   const snapshot = await getCurrentSongAndProgress();
   return snapshot.progress;
+}
+
+async function requestFirstAvailable(paths) {
+  let lastError = null;
+
+  for (const path of paths) {
+    let response = await fetch(buildUrl(path), {
+      method: 'POST',
+    });
+
+    if (response.status === 404 || response.status === 405) {
+      response = await fetch(buildUrl(path), {
+        method: 'GET',
+      });
+    }
+
+    if (response.ok) {
+      return;
+    }
+
+    if (response.status === 404 || response.status === 405) {
+      continue;
+    }
+
+    lastError = new Error(`Request failed for ${path} (${response.status})`);
+    break;
+  }
+
+  if (lastError) {
+    throw lastError;
+  }
+
+  throw new Error('No compatible media endpoint found');
+}
+
+export async function mediaPlay(song) {
+  const normalizedMrl = safeDecode(song?.mrl ?? song?.id ?? '');
+  if (!normalizedMrl) {
+    throw new Error('Missing song MRL for play action');
+  }
+
+  await fetchJson('/api/media/play', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      mrl: normalizedMrl,
+    }),
+  });
+}
+
+export async function mediaPause() {
+  await requestFirstAvailable(['/api/media/pause']);
+}
+
+export async function mediaResume() {
+  await requestFirstAvailable(['/api/media/resume', '/api/media/play']);
+}
+
+export async function mediaStop() {
+  await requestFirstAvailable(['/api/media/stop']);
+}
+
+export async function mediaNextSong() {
+  await requestFirstAvailable(['/api/media/next', '/api/media/next-song', '/api/media/nextSong']);
+}
+
+export async function mediaEmptyQueue() {
+  await requestFirstAvailable([
+    '/api/media/empty-queue',
+    '/api/media/emptyQueue',
+    '/api/media/clear-queue',
+    '/api/media/clearQueue',
+    '/api/media/empty',
+  ]);
 }
