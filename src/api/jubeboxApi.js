@@ -134,3 +134,148 @@ export async function getCurrentSong() {
     albumName: item.album ?? 'Unknown Album',
   };
 }
+
+export async function getApiVersion() {
+  const payload = await fetchJson('/api/about/version');
+
+  if (typeof payload === 'string') {
+    return payload;
+  }
+
+  if (payload && typeof payload.version === 'string') {
+    return payload.version;
+  }
+
+  return 'unknown';
+}
+
+export function getSongArtworkUrl(song) {
+  const normalizedMrl = safeDecode(song?.mrl ?? song?.id ?? '');
+  if (!normalizedMrl) {
+    return null;
+  }
+
+  return buildUrl(`/api/image/fetch?mrl=${encodeURIComponent(normalizedMrl)}`);
+}
+
+function pickFiniteNumber(...values) {
+  const parseClockString = (value) => {
+    if (typeof value !== 'string' || !value.includes(':')) {
+      return null;
+    }
+
+    const parts = value.split(':').map((part) => Number(part));
+    if (parts.some((part) => !Number.isFinite(part) || part < 0)) {
+      return null;
+    }
+
+    if (parts.length === 3) {
+      return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+    }
+
+    if (parts.length === 2) {
+      return (parts[0] * 60) + parts[1];
+    }
+
+    return null;
+  };
+
+  for (const value of values) {
+    const clockValue = parseClockString(value);
+    if (Number.isFinite(clockValue) && clockValue >= 0) {
+      return clockValue;
+    }
+
+    const numeric = Number(value);
+    if (Number.isFinite(numeric) && numeric >= 0) {
+      return numeric;
+    }
+  }
+
+  return null;
+}
+
+function toSeconds(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric < 0) {
+    return null;
+  }
+
+  return numeric > 10000 ? numeric / 1000 : numeric;
+}
+
+function pickProgressSource(payload) {
+  if (!payload || typeof payload !== 'object') {
+    return null;
+  }
+
+  return (
+    payload.tag
+    ?? payload.data
+    ?? payload.nowPlaying
+    ?? payload.current
+    ?? payload
+  );
+}
+
+export async function getCurrentSongProgress(song) {
+  const normalizedMrl = safeDecode(song?.mrl ?? song?.id ?? '');
+  if (!normalizedMrl) {
+    return null;
+  }
+
+  const payload = await fetchJson(`/api/tag/read?mrl=${encodeURIComponent(normalizedMrl)}`, {
+    cache: 'no-store',
+  });
+
+  const source = pickProgressSource(payload);
+  if (!source) {
+    return null;
+  }
+
+  const durationRaw = pickFiniteNumber(
+    source.durationSeconds,
+    source.duration,
+    source.durationMs,
+    source.lengthSeconds,
+    source.length,
+    source.lengthMs,
+    source.totalSeconds,
+    source.total,
+    source.totalMs,
+    source.trackLength,
+    source.trackLengthMs,
+    source.trackDuration,
+    source.trackDurationMs,
+  );
+
+  const currentRaw = pickFiniteNumber(
+    source.currentSeconds,
+    source.current,
+    source.currentMs,
+    source.currentTime,
+    source.positionSeconds,
+    source.position,
+    source.positionMs,
+    source.elapsedSeconds,
+    source.elapsed,
+    source.elapsedMs,
+    source.progressSeconds,
+    source.progress,
+    source.progressMs,
+    source.time,
+    source.timeMs,
+  );
+
+  const durationSeconds = toSeconds(durationRaw);
+  const currentSeconds = toSeconds(currentRaw);
+
+  if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+    return null;
+  }
+
+  return {
+    currentSeconds: Math.min(Number.isFinite(currentSeconds) ? currentSeconds : 0, durationSeconds),
+    durationSeconds,
+  };
+}
