@@ -241,6 +241,42 @@ body {
   margin: 0;
 }
 
+.queue-title-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.ws-status-badge {
+  border: 1px solid #cbd7db;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #41565c;
+  background: #f2f7f9;
+}
+
+.ws-status-connected {
+  border-color: #9fd4c5;
+  color: #0e554f;
+  background: #e9f7f2;
+}
+
+.ws-status-reconnecting,
+.ws-status-connecting {
+  border-color: #d7c88f;
+  color: #6e5a1a;
+  background: #fbf5e1;
+}
+
+.ws-status-fallback {
+  border-color: #b8c8de;
+  color: #2b496f;
+  background: #edf3fb;
+}
+
 .queue-actions {
   display: flex;
   gap: 0.55rem;

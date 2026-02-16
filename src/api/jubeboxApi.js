@@ -392,6 +392,10 @@ export async function getCurrentSongAndProgress() {
     cache: 'no-store',
   });
 
+  return parseCurrentSongAndProgressPayload(payload);
+}
+
+export function parseCurrentSongAndProgressPayload(payload) {
   return {
     song: normalizeCurrentSong(payload),
     progress: normalizeCurrentSongProgress(payload),
