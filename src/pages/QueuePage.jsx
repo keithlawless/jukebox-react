@@ -10,7 +10,7 @@ import {
   mediaPause,
   mediaResume,
   mediaStop,
-} from '../api/jubeboxApi';
+} from '../api/jukeboxApi';
 
 const AUTO_REFRESH_SECONDS = 5;
 

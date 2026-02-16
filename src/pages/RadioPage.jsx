@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getRadioStations, playRadioStation, stopRadioStation } from '../api/jubeboxApi';
+import { getRadioStations, playRadioStation, stopRadioStation } from '../api/jukeboxApi';
 
 function RadioPage() {
   const [stations, setStations] = useState([]);

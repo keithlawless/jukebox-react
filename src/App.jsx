@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import packageJson from '../package.json';
-import { getApiVersion } from './api/jubeboxApi';
+import { getApiVersion } from './api/jukeboxApi';
 import BrowsePage from './pages/BrowsePage';
 import QueuePage from './pages/QueuePage';
 import RadioPage from './pages/RadioPage';

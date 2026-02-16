@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { addSongToQueue, getSearchStatus, searchAllSongs } from '../api/jubeboxApi';
+import { addSongToQueue, getSearchStatus, searchAllSongs } from '../api/jukeboxApi';
 
 const INDEX_STATUS_REFRESH_MS = 10_000;
 const SEARCH_DEBOUNCE_MS = 2_000;

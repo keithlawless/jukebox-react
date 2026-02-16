@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import ScrollableLetterList from '../components/ScrollableLetterList';
-import { addSongToQueue, getAlbumsByArtist, getArtists, getSongsByAlbum } from '../api/jubeboxApi';
+import { addSongToQueue, getAlbumsByArtist, getArtists, getSongsByAlbum } from '../api/jukeboxApi';
 
 function BrowsePage() {
   const [artists, setArtists] = useState([]);
