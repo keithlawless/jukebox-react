@@ -18,12 +18,13 @@ const RUNTIME_CONFIG_PATH = '/jukebox-config.json';
 let runtimeConfigPromise = null;
 
 function getDefaultCurrentSongWsUrl() {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     return 'ws://192.168.4.199:8080/api/ws/current-song';
   }
 
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${protocol}//${window.location.host}/api/ws/current-song`;
+  return `${protocol}//${window.location.hostname}:8080/api/ws/current-song`;
 }
 
 async function getRuntimeConfig() {
