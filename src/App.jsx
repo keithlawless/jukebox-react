@@ -5,6 +5,7 @@ import { getApiVersion } from './api/jubeboxApi';
 import BrowsePage from './pages/BrowsePage';
 import QueuePage from './pages/QueuePage';
 import RadioPage from './pages/RadioPage';
+import SearchPage from './pages/SearchPage';
 
 function App() {
   const [apiVersion, setApiVersion] = useState('loading...');
@@ -44,6 +45,9 @@ function App() {
             <NavLink to="/radio" className={({ isActive }) => (isActive ? 'active' : '')}>
               Radio
             </NavLink>
+            <NavLink to="/search" className={({ isActive }) => (isActive ? 'active' : '')}>
+              Search
+            </NavLink>
           </nav>
           <div className="version-badges">
             <span>UI {packageJson.version}</span>
@@ -58,6 +62,7 @@ function App() {
           <Route path="/browse" element={<BrowsePage />} />
           <Route path="/queue" element={<QueuePage />} />
           <Route path="/radio" element={<RadioPage />} />
+          <Route path="/search" element={<SearchPage />} />
         </Routes>
       </main>
     </div>

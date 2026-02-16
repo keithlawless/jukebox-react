@@ -150,6 +150,78 @@ export async function getQueueState() {
   }));
 }
 
+export async function getSearchStatus() {
+  const payload = await fetchJson('/api/search/status');
+
+  return {
+    indexing: Boolean(payload?.indexing),
+    indexReady: Boolean(payload?.indexReady),
+  };
+}
+
+export async function searchAllSongs(searchTerm) {
+  const trimmedSearchTerm = typeof searchTerm === 'string' ? searchTerm.trim() : '';
+  if (trimmedSearchTerm.length < 3) {
+    return [];
+  }
+
+  const payload = await fetchJson(`/api/search/all?searchTerm=${encodeURIComponent(trimmedSearchTerm)}`);
+  const resultList = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload?.results)
+      ? payload.results
+      : Array.isArray(payload?.songs)
+        ? payload.songs
+        : [];
+
+  const normalizedResults = resultList
+    .map((item, index) => {
+      if (typeof item === 'string') {
+        const mrl = safeDecode(item);
+        return {
+          id: mrl || `search-result-${index}`,
+          mrl,
+          name: decodeMrlName(mrl) || `Result ${index + 1}`,
+          artistName: 'Unknown Artist',
+          albumName: 'Unknown Album',
+        };
+      }
+
+      const mrl = safeDecode(item?.mrl ?? item?.id ?? item?.url ?? item?.path ?? '');
+      if (!mrl) {
+        return null;
+      }
+
+      return {
+        id: mrl,
+        mrl,
+        name: item?.title ?? item?.name ?? (decodeMrlName(mrl) || `Result ${index + 1}`),
+        artistName: item?.artist ?? item?.artistName ?? 'Unknown Artist',
+        albumName: item?.album ?? item?.albumName ?? 'Unknown Album',
+      };
+    })
+    .filter(Boolean);
+
+  return sortByName(normalizedResults);
+}
+
+export async function addSongToQueueByJson(song) {
+  const normalizedMrl = safeDecode(song?.mrl ?? song?.id ?? '');
+  if (!normalizedMrl) {
+    throw new Error('Missing song MRL for queue add action');
+  }
+
+  await fetchJson('/api/queue/add', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      mrl: normalizedMrl,
+    }),
+  });
+}
+
 export async function getRadioStations() {
   const payload = await fetchJson('/api/radio/list');
   const stationList = Array.isArray(payload)
