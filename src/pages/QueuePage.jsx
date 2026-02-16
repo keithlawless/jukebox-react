@@ -13,19 +13,50 @@ import {
 } from '../api/jukeboxApi';
 
 const AUTO_REFRESH_SECONDS = 5;
+const RUNTIME_CONFIG_PATH = '/jukebox-config.json';
 
-function getCurrentSongWsUrl() {
-  const overrideWsUrl = import.meta.env.VITE_CURRENT_SONG_WS_URL;
-  if (overrideWsUrl) {
-    return overrideWsUrl;
-  }
+let runtimeConfigPromise = null;
 
+function getDefaultCurrentSongWsUrl() {
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     return 'ws://192.168.4.199:8080/api/ws/current-song';
   }
 
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   return `${protocol}//${window.location.host}/api/ws/current-song`;
+}
+
+async function getRuntimeConfig() {
+  if (!runtimeConfigPromise) {
+    runtimeConfigPromise = fetch(RUNTIME_CONFIG_PATH, { cache: 'no-store' })
+      .then(async (response) => {
+        if (!response.ok) {
+          return null;
+        }
+
+        return response.json();
+      })
+      .catch(() => null);
+  }
+
+  return runtimeConfigPromise;
+}
+
+async function getCurrentSongWsUrl() {
+  const runtimeConfig = await getRuntimeConfig();
+  const configuredWsUrl = typeof runtimeConfig?.currentSongWsUrl === 'string'
+    ? runtimeConfig.currentSongWsUrl.trim()
+    : '';
+  if (configuredWsUrl) {
+    return configuredWsUrl;
+  }
+
+  const overrideWsUrl = import.meta.env.VITE_CURRENT_SONG_WS_URL;
+  if (overrideWsUrl) {
+    return overrideWsUrl;
+  }
+
+  return getDefaultCurrentSongWsUrl();
 }
 
 async function parseSocketEventData(eventData) {
@@ -196,9 +227,14 @@ function QueuePage() {
     let reconnectTimeoutId = null;
     let socket = null;
 
-    const connect = () => {
+    const connect = async () => {
       setWsStatus('connecting');
-      socket = new WebSocket(getCurrentSongWsUrl());
+      const wsUrl = await getCurrentSongWsUrl();
+      if (!isMounted) {
+        return;
+      }
+
+      socket = new WebSocket(wsUrl);
 
       socket.addEventListener('open', () => {
         lastWsMessageAtRef.current = Date.now();

@@ -1,0 +1,3 @@
+{
+  "currentSongWsUrl": "ws://192.168.4.199:8080/api/ws/current-song"
+}
