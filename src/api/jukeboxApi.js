@@ -275,9 +275,7 @@ export async function playRadioStation(station) {
 }
 
 export async function stopRadioStation() {
-  await fetchJson('/api/radio/stop', {
-    method: 'POST',
-  });
+  await requestFirstAvailable(['/api/radio/stop']);
 }
 
 export async function getCurrentSong() {

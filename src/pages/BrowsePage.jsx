@@ -141,6 +141,12 @@ function BrowsePage() {
           selectedId={null}
           onSelect={handleSongSelect}
           emptyMessage={selectedAlbum ? 'No songs found' : 'Select an album first'}
+          emptyContent={loadingSongs ? (
+            <span className="lookup-status" role="status" aria-live="polite">
+              <span className="lookup-spinner" aria-hidden="true" />
+              Loading songs from disk...
+            </span>
+          ) : null}
           getItemLabel={(song) => song.name}
           ariaLabel="Song list"
         />

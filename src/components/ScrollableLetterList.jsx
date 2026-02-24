@@ -14,6 +14,7 @@ function ScrollableLetterList({
   selectedId,
   onSelect,
   emptyMessage,
+  emptyContent,
   getItemLabel,
   ariaLabel,
 }) {
@@ -45,7 +46,7 @@ function ScrollableLetterList({
           aria-label={ariaLabel}
         >
           {items.length === 0 ? (
-            <li className="empty-row">{emptyMessage}</li>
+            <li className="empty-row">{emptyContent ?? emptyMessage}</li>
           ) : (
             items.map((item) => {
               const label = getItemLabel(item);

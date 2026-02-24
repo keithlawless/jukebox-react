@@ -104,6 +104,31 @@ body {
   color: #3d4f54;
 }
 
+.lookup-status {
+  margin: -0.25rem 0 0;
+  color: #2f545c;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.lookup-spinner {
+  display: inline-block;
+  width: 0.95rem;
+  height: 0.95rem;
+  border-radius: 999px;
+  border: 2px solid #b8c9cb;
+  border-top-color: #126b64;
+  animation: lookup-spin 0.75s linear infinite;
+}
+
+@keyframes lookup-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .error-banner {
   border: 1px solid #df9fb0;
   color: var(--error);
