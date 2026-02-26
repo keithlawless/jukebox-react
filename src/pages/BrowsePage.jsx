@@ -147,7 +147,7 @@ function BrowsePage() {
               Loading songs from disk...
             </span>
           ) : null}
-          getItemLabel={(song) => song.name}
+          getItemLabel={(song) => song.trackNumber != null ? `${song.trackNumber}. ${song.name}` : song.name}
           ariaLabel="Song list"
         />
       </div>

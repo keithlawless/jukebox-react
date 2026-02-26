@@ -92,6 +92,28 @@ function getFriendlySongTitle(tagPayload, fallbackName) {
   return fallbackName;
 }
 
+function getTrackNumber(tagPayload) {
+  if (!tagPayload || typeof tagPayload !== 'object') {
+    return null;
+  }
+
+  const source = tagPayload.tag ?? tagPayload.data ?? tagPayload;
+  const track = source?.track ?? source?.trackNumber ?? source?.trackNum;
+  
+  if (typeof track === 'number' && track > 0) {
+    return track;
+  }
+  
+  if (typeof track === 'string') {
+    const parsed = parseInt(track, 10);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+  
+  return null;
+}
+
 export async function getArtists() {
   const folder = await getFolderListing();
   const artists = (folder.folders ?? []).map((mrl, index) => normalizeFolderItem(mrl, index, 'Artist'));
@@ -113,9 +135,11 @@ export async function getSongsByAlbum(album) {
     const baseName = decodeMrlName(fileValue) || decodeMrlName(id) || `Song ${index + 1}`;
 
     let friendlyName = baseName;
+    let trackNumber = null;
     try {
       const tagPayload = await getTagForMrl(id);
       friendlyName = getFriendlySongTitle(tagPayload, baseName);
+      trackNumber = getTrackNumber(tagPayload);
     } catch {
       friendlyName = baseName;
     }
@@ -124,10 +148,30 @@ export async function getSongsByAlbum(album) {
       id,
       name: friendlyName,
       mrl: id,
+      trackNumber,
     };
   }));
 
-  return sortByName(songs);
+  const sorted = [...songs].sort((a, b) => {
+    const trackA = a.trackNumber;
+    const trackB = b.trackNumber;
+    
+    if (trackA != null && trackB != null) {
+      return trackA - trackB;
+    }
+    
+    if (trackA != null) {
+      return -1;
+    }
+    
+    if (trackB != null) {
+      return 1;
+    }
+    
+    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+  });
+
+  return sorted;
 }
 
 export async function addSongToQueue(song) {
