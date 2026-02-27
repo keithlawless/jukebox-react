@@ -66,13 +66,14 @@ function ScrollableLetterList({
 
   const handleScrubberInteraction = (clientY) => {
     const scrubber = scrubberRef.current;
-    if (!scrubber || availableLetters.length === 0) {
+    const container = containerRef.current;
+    if (!scrubber || !container || availableLetters.length === 0) {
       return;
     }
 
-    const rect = scrubber.getBoundingClientRect();
-    const relativeY = clientY - rect.top;
-    const percentage = Math.max(0, Math.min(1, relativeY / rect.height));
+    const containerRect = container.getBoundingClientRect();
+    const relativeY = clientY - containerRect.top;
+    const percentage = Math.max(0, Math.min(1, relativeY / containerRect.height));
     const letterIndex = Math.floor(percentage * availableLetters.length);
     const targetLetter = availableLetters[Math.min(letterIndex, availableLetters.length - 1)];
     
