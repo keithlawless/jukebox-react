@@ -17,6 +17,7 @@ function ScrollableLetterList({
   emptyContent,
   getItemLabel,
   ariaLabel,
+  headerAction,
 }) {
   const containerRef = useRef(null);
   const [scrollLetter, setScrollLetter] = useState('');
@@ -36,7 +37,10 @@ function ScrollableLetterList({
 
   return (
     <section className="list-column">
-      <h2>{title}</h2>
+      <div className="list-header">
+        <h2>{title}</h2>
+        {headerAction}
+      </div>
       <div className="scroll-area-wrapper">
         <ul
           className="scroll-list"

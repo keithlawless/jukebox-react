@@ -181,6 +181,17 @@ export async function addSongToQueue(song) {
   });
 }
 
+export async function addManyToQueue(songs) {
+  const mrls = songs.map(song => safeDecode(song.mrl ?? song.id ?? '')).filter(mrl => mrl);
+  await fetchJson('/api/queue/addmany', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(mrls),
+  });
+}
+
 export async function getQueueState() {
   const payload = await fetchJson('/api/queue/list');
   const queue = Array.isArray(payload?.queue) ? payload.queue : [];

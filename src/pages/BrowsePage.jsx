@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import ScrollableLetterList from '../components/ScrollableLetterList';
-import { addSongToQueue, getAlbumsByArtist, getArtists, getSongsByAlbum } from '../api/jukeboxApi';
+import { addManyToQueue, addSongToQueue, getAlbumsByArtist, getArtists, getSongsByAlbum } from '../api/jukeboxApi';
 
 function BrowsePage() {
   const [artists, setArtists] = useState([]);
@@ -108,6 +108,16 @@ function BrowsePage() {
     }
   };
 
+  const handleAddAllSongs = async () => {
+    setError('');
+
+    try {
+      await addManyToQueue(songs);
+    } catch (loadError) {
+      setError(loadError.message || 'Unable to add songs to queue');
+    }
+  };
+
   return (
     <div className="browse-page">
       <p className="helper-text">Select an artist, then an album, then click a song to add it to the queue.</p>
@@ -149,6 +159,16 @@ function BrowsePage() {
           ) : null}
           getItemLabel={(song) => song.trackNumber != null ? `${song.trackNumber}. ${song.name}` : song.name}
           ariaLabel="Song list"
+          headerAction={songs.length > 0 ? (
+            <button
+              type="button"
+              className="add-all-button"
+              onClick={handleAddAllSongs}
+              aria-label="Add all songs to queue"
+            >
+              Add All
+            </button>
+          ) : null}
         />
       </div>
     </div>
