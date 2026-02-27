@@ -237,7 +237,23 @@ body {
   font-weight: 700;
   color: #fff;
   background: rgba(18, 107, 100, 0.86);
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.scroll-tooltip:hover {
+  background: rgba(18, 107, 100, 0.95);
+  transform: scale(1.1);
+}
+
+.scroll-tooltip.dragging {
+  cursor: grabbing;
+  background: var(--accent);
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(18, 107, 100, 0.4);
 }
 
 .queue-page {
