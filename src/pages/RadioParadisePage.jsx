@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getRadioParadiseNowPlaying, playRadioStation, stopRadioStation } from '../api/jukeboxApi';
+import { getCurrentSong, getRadioParadiseNowPlaying, playRadioStation, stopRadioStation } from '../api/jukeboxApi';
 
 const RADIO_PARADISE_CHANNELS = [
   { id: 0, name: 'The Main Mix', url: 'http://stream.radioparadise.com/flacm', description: 'Eclectic mix of rock, world, electronica & more' },
@@ -18,6 +18,32 @@ function RadioParadisePage() {
   const [metadata, setMetadata] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getCurrentSong()
+      .then((currentSong) => {
+        if (!isMounted || !currentSong?.mrl) {
+          return;
+        }
+
+        const activeChannel = RADIO_PARADISE_CHANNELS.find(
+          (channel) => currentSong.mrl === channel.url
+        );
+
+        if (activeChannel) {
+          setPlayingChannel(activeChannel.id);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to detect active Radio Paradise stream:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (playingChannel === null) {
