@@ -339,17 +339,12 @@ export async function getCurrentSong() {
 }
 
 export async function getApiVersion() {
-  const payload = await fetchJson('/api/about/version');
+  const data = await fetchJson('/api/about/version');
+  return data?.version ?? data?.apiVersion ?? null;
+}
 
-  if (typeof payload === 'string') {
-    return payload;
-  }
-
-  if (payload && typeof payload.version === 'string') {
-    return payload.version;
-  }
-
-  return 'unknown';
+export async function getRadioParadiseNowPlaying(channel) {
+  return fetchJson(`/api/radioparadise/nowplaying?chan=${channel}`);
 }
 
 export function getSongArtworkUrl(song) {
