@@ -299,6 +299,166 @@ body {
   gap: 0.7rem;
 }
 
+.radio-paradise-page {
+  max-width: 860px;
+  margin: 0 auto;
+  display: grid;
+  gap: 1rem;
+}
+
+.radio-paradise-page .page-header {
+  text-align: center;
+}
+
+.radio-paradise-page .page-header h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+  color: var(--accent);
+}
+
+.radio-paradise-page .page-header .helper-text {
+  margin: 0;
+  color: #6a6a6a;
+}
+
+.now-playing-card {
+  border: 2px solid var(--accent);
+  border-radius: 14px;
+  padding: 1rem;
+  background: var(--card);
+}
+
+.now-playing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.now-playing-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--accent);
+}
+
+.stop-button {
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #fff;
+  background: var(--error);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.stop-button:hover {
+  opacity: 0.9;
+}
+
+.stop-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.now-playing-content {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.album-art {
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.song-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.song-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.song-artist {
+  font-size: 1rem;
+  color: #555;
+}
+
+.song-album {
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.channels-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.channel-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem;
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.channel-info h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--ink);
+}
+
+.channel-info p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+.channel-button {
+  padding: 0.65rem 1rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.channel-button:hover {
+  background: var(--accent);
+  color: var(--card);
+}
+
+.channel-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.channel-button.playing {
+  background: var(--error);
+  color: #fff;
+  border-color: var(--error);
+}
+
+.channel-button.playing:hover {
+  opacity: 0.9;
+}
+
 .search-page {
   max-width: 860px;
   margin: 0 auto;

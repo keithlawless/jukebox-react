@@ -17,6 +17,11 @@ A React + Vite web UI for browsing music, managing the play queue, controlling p
 - **Radio view**
   - Station list from `/api/radio/list`
   - Play/Stop controls per station
+- **Radio Paradise**
+  - 8 curated FLAC streaming channels (Main Mix, Mellow, Rock, World/Etc, Ambient, Blues, Celtic/World, Eclectic Rock)
+  - Live metadata with album artwork from Radio Paradise API
+  - Now Playing card with song info, artist, album, and year
+  - Auto-refresh metadata every 10 seconds
 - **Version badges**
   - UI version from `package.json`
   - API version from `/api/about/version`

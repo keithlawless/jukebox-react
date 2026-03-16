@@ -5,6 +5,7 @@ import { getApiVersion } from './api/jukeboxApi';
 import BrowsePage from './pages/BrowsePage';
 import QueuePage from './pages/QueuePage';
 import RadioPage from './pages/RadioPage';
+import RadioParadisePage from './pages/RadioParadisePage';
 import SearchPage from './pages/SearchPage';
 
 function App() {
@@ -45,6 +46,9 @@ function App() {
             <NavLink to="/radio" className={({ isActive }) => (isActive ? 'active' : '')}>
               Radio
             </NavLink>
+            <NavLink to="/radio-paradise" className={({ isActive }) => (isActive ? 'active' : '')}>
+              Radio Paradise
+            </NavLink>
             <NavLink to="/search" className={({ isActive }) => (isActive ? 'active' : '')}>
               Search
             </NavLink>
@@ -62,6 +66,7 @@ function App() {
           <Route path="/browse" element={<BrowsePage />} />
           <Route path="/queue" element={<QueuePage />} />
           <Route path="/radio" element={<RadioPage />} />
+          <Route path="/radio-paradise" element={<RadioParadisePage />} />
           <Route path="/search" element={<SearchPage />} />
         </Routes>
       </main>
