@@ -1,15 +1,14 @@
 import { useEffect, useState } from 'react';
-import { playRadioStation, stopRadioStation } from '../api/jukeboxApi';
+import { getRadioParadiseNowPlaying, playRadioStation, stopRadioStation } from '../api/jukeboxApi';
 
 const RADIO_PARADISE_CHANNELS = [
-  { id: 0, name: 'Main Mix', url: 'http://stream.radioparadise.com/flacm', description: 'Eclectic mix of rock, world, electronica & more' },
+  { id: 0, name: 'The Main Mix', url: 'http://stream.radioparadise.com/flacm', description: 'Eclectic mix of rock, world, electronica & more' },
   { id: 1, name: 'Mellow Mix', url: 'http://stream.radioparadise.com/mellow-flacm', description: 'Mellower, chilled-out channel' },
   { id: 2, name: 'Rock Mix', url: 'http://stream.radioparadise.com/rock-flacm', description: 'Heavier, more rock-oriented' },
-  { id: 3, name: 'World/Etc Mix', url: 'http://stream.radioparadise.com/global-flacm', description: 'Global sounds & beyond' },
-  { id: 4, name: 'Ambient', url: 'http://stream.radioparadise.com/ambient-flacm', description: 'Ambient, atmospheric, instrumental' },
-  { id: 5, name: 'Blues', url: 'http://stream.radioparadise.com/blues-flacm', description: 'Blues in all its forms' },
-  { id: 6, name: 'Celtic/World', url: 'http://stream.radioparadise.com/celtic-flacm', description: 'Celtic & world music' },
-  { id: 7, name: 'Eclectic Rock', url: 'http://stream.radioparadise.com/eclectic-flacm', description: 'The most eclectic rock mix' },
+  { id: 3, name: 'Globalized', url: 'http://stream.radioparadise.com/global-flacm', description: 'Global sounds from around the world' },
+  { id: 4, name: 'Beyond', url: 'http://stream.radioparadise.com/beyond-flacm', description: 'Beyond the boundaries of genre' },
+  { id: 5, name: 'KFAT', url: 'http://stream.radioparadise.com/kfat-flacm', description: 'KFAT revival stream' },
+  { id: 6, name: 'Radio 2025', url: 'http://stream.radioparadise.com/radio2050-flacm', description: 'Music of the future' },
 ];
 
 const METADATA_REFRESH_MS = 10000;
@@ -31,11 +30,7 @@ function RadioParadisePage() {
 
     const fetchMetadata = async () => {
       try {
-        const response = await fetch(`https://api.radioparadise.com/api/now_playing?chan=${playingChannel}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch metadata');
-        }
-        const data = await response.json();
+        const data = await getRadioParadiseNowPlaying(playingChannel);
         
         if (isMounted) {
           setMetadata(data);
