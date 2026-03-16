@@ -4,6 +4,7 @@ import {
   getQueueState,
   parseCurrentSongAndProgressPayload,
   getRadioStations,
+  getRadioParadiseNowPlaying,
   getSongArtworkUrl,
   mediaEmptyQueue,
   mediaNextSong,
@@ -14,6 +15,16 @@ import {
 
 const AUTO_REFRESH_SECONDS = 5;
 const RUNTIME_CONFIG_PATH = '/jukebox-config.json';
+const RADIO_PARADISE_CHANNELS = [
+  { id: 0, name: 'The Main Mix', url: 'http://stream.radioparadise.com/flacm' },
+  { id: 1, name: 'Mellow Mix', url: 'http://stream.radioparadise.com/mellow-flacm' },
+  { id: 2, name: 'Rock Mix', url: 'http://stream.radioparadise.com/rock-flacm' },
+  { id: 3, name: 'Globalized', url: 'http://stream.radioparadise.com/global-flacm' },
+  { id: 4, name: 'Beyond', url: 'http://stream.radioparadise.com/beyond-flacm' },
+  { id: 5, name: 'KFAT', url: 'http://stream.radioparadise.com/kfat-flacm' },
+  { id: 6, name: 'Radio 2025', url: 'http://stream.radioparadise.com/radio2050-flacm' },
+];
+const RP_METADATA_REFRESH_MS = 10000;
 
 let runtimeConfigPromise = null;
 
@@ -114,6 +125,7 @@ function QueuePage() {
   const [error, setError] = useState('');
   const [artworkUnavailable, setArtworkUnavailable] = useState(false);
   const [internetRadioDescription, setInternetRadioDescription] = useState('');
+  const [radioParadiseMetadata, setRadioParadiseMetadata] = useState(null);
   const lastWsMessageAtRef = useRef(0);
   const hasConnectedWsRef = useRef(false);
 
@@ -130,7 +142,12 @@ function QueuePage() {
     return queueSongs.slice(currentIndex + 1);
   }, [currentSong, queueSongs]);
 
-  const artworkUrl = useMemo(() => getSongArtworkUrl(currentSong), [currentSong]);
+  const artworkUrl = useMemo(() => {
+    if (radioParadiseMetadata?.cover) {
+      return radioParadiseMetadata.cover_med || radioParadiseMetadata.cover;
+    }
+    return getSongArtworkUrl(currentSong);
+  }, [currentSong, radioParadiseMetadata]);
 
   useEffect(() => {
     setArtworkUnavailable(false);
@@ -151,9 +168,16 @@ function QueuePage() {
   const isPlaying = playState === 'PLAYING';
   const isPaused = playState === 'PAUSED';
   const isStopped = !currentSong || playState === 'STOPPED';
-  const currentSongDisplayName = isInternetRadio && internetRadioDescription
-    ? internetRadioDescription
-    : currentSong?.name;
+  const isRadioParadise = Boolean(radioParadiseMetadata);
+  const currentSongDisplayName = radioParadiseMetadata?.title
+    ? radioParadiseMetadata.title
+    : (isInternetRadio && internetRadioDescription
+      ? internetRadioDescription
+      : currentSong?.name);
+  const currentArtistName = radioParadiseMetadata?.artist || currentSong?.artistName;
+  const currentAlbumName = radioParadiseMetadata?.album
+    ? `${radioParadiseMetadata.album}${radioParadiseMetadata.year ? ` (${radioParadiseMetadata.year})` : ''}`
+    : currentSong?.albumName;
   const wsStatusText = {
     connecting: 'WS connecting',
     connected: 'WS connected',
@@ -367,6 +391,50 @@ function QueuePage() {
     };
   }, [currentSong, isInternetRadio]);
 
+  useEffect(() => {
+    if (!currentSong?.mrl) {
+      setRadioParadiseMetadata(null);
+      return;
+    }
+
+    const currentMrl = normalizeMrlForCompare(currentSong.mrl);
+    const matchedChannel = RADIO_PARADISE_CHANNELS.find(
+      (channel) => normalizeMrlForCompare(channel.url) === currentMrl
+    );
+
+    if (!matchedChannel) {
+      setRadioParadiseMetadata(null);
+      return;
+    }
+
+    let isMounted = true;
+    let timeoutId = null;
+
+    const fetchRPMetadata = async () => {
+      try {
+        const metadata = await getRadioParadiseNowPlaying(matchedChannel.id);
+        if (isMounted) {
+          setRadioParadiseMetadata(metadata);
+        }
+      } catch (err) {
+        console.error('Radio Paradise metadata fetch error:', err);
+      } finally {
+        if (isMounted) {
+          timeoutId = setTimeout(fetchRPMetadata, RP_METADATA_REFRESH_MS);
+        }
+      }
+    };
+
+    fetchRPMetadata();
+
+    return () => {
+      isMounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [currentSong]);
+
   return (
     <div className="queue-page">
       <div className="queue-header-row">
@@ -397,9 +465,9 @@ function QueuePage() {
             <div>
               <p className="song-name">{currentSongDisplayName}</p>
               <p className="song-meta">
-                {currentSong.artistName || 'Unknown Artist'} · {currentSong.albumName || 'Unknown Album'}
+                {currentArtistName || 'Unknown Artist'} · {currentAlbumName || 'Unknown Album'}
               </p>
-              {isInternetRadio ? null : (
+              {isInternetRadio && !isRadioParadise ? null : (
                 <div className="song-progress" aria-label="Song progress">
                   <div className="song-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progressPercent)}>
                     <div className="song-progress-fill" style={{ width: `${progressPercent}%` }} />
