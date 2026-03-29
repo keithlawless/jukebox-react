@@ -11,6 +11,9 @@ import {
   mediaPause,
   mediaResume,
   mediaStop,
+  activateSpotifyMode,
+  deactivateSpotifyMode,
+  getMediaSource,
 } from '../api/jukeboxApi';
 
 const AUTO_REFRESH_SECONDS = 5;
@@ -126,6 +129,7 @@ function QueuePage() {
   const [artworkUnavailable, setArtworkUnavailable] = useState(false);
   const [internetRadioDescription, setInternetRadioDescription] = useState('');
   const [radioParadiseMetadata, setRadioParadiseMetadata] = useState(null);
+  const [audioSource, setAudioSource] = useState('LOCAL');
   const lastWsMessageAtRef = useRef(0);
   const hasConnectedWsRef = useRef(false);
 
@@ -164,6 +168,8 @@ function QueuePage() {
   const progressCurrentSeconds = currentProgress?.currentSeconds ?? 0;
   const progressDurationSeconds = currentProgress?.durationSeconds ?? 0;
   const playState = currentSong?.playState ?? 'STOPPED';
+  const currentAudioSource = audioSource;
+  const isSpotifyMode = currentAudioSource === 'SPOTIFY';
   const isInternetRadio = (currentSong?.artistName ?? '').trim().toLowerCase() === 'internet radio';
   const isPlaying = playState === 'PLAYING';
   const isPaused = playState === 'PAUSED';
@@ -210,11 +216,46 @@ function QueuePage() {
     }
   };
 
+  const handleSpotifyToggle = async () => {
+    setActionLoading(true);
+    setError('');
+
+    try {
+      if (isSpotifyMode) {
+        await deactivateSpotifyMode();
+      } else {
+        await activateSpotifyMode();
+      }
+      const newSource = await getMediaSource();
+      setAudioSource(newSource);
+      
+      const snapshot = await getCurrentSongAndProgress();
+      setCurrentSong(snapshot.song);
+      setCurrentProgress(snapshot.song ? snapshot.progress : null);
+    } catch (toggleError) {
+      setError(toggleError.message || 'Unable to toggle Spotify mode');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadQueueSongs();
 
+    const loadAudioSource = async () => {
+      try {
+        const source = await getMediaSource();
+        setAudioSource(source);
+      } catch {
+        // Ignore errors, default to LOCAL
+      }
+    };
+
+    loadAudioSource();
+
     const refreshIntervalId = window.setInterval(() => {
       loadQueueSongs();
+      loadAudioSource();
     }, AUTO_REFRESH_SECONDS * 1000);
 
     return () => {
@@ -442,13 +483,50 @@ function QueuePage() {
           <h2>Play Queue</h2>
           <span className={`ws-status-badge ws-status-${wsStatus}`}>{wsStatusText}</span>
         </div>
+        <div className="queue-actions">
+          <div className="toggle-switch">
+            <span className="toggle-switch-label">Spotify Mode</span>
+            <div
+              className={`toggle-switch-track ${isSpotifyMode ? 'active' : ''} ${actionLoading ? 'disabled' : ''}`}
+              onClick={actionLoading ? undefined : handleSpotifyToggle}
+              role="switch"
+              aria-checked={isSpotifyMode}
+              aria-label="Toggle Spotify mode"
+              tabIndex={actionLoading ? -1 : 0}
+              onKeyDown={(e) => {
+                if (!actionLoading && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault();
+                  handleSpotifyToggle();
+                }
+              }}
+            >
+              <div className="toggle-switch-thumb" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {error ? <p className="error-banner">{error}</p> : null}
 
       <section className="current-song-card">
         <h3>Now Playing</h3>
-        {currentSong ? (
+        {isSpotifyMode ? (
+          <div className="now-playing-layout">
+            <div className="now-playing-artwork-fallback" aria-label="Spotify mode active">
+              🎵
+            </div>
+            <div>
+              <p className="song-name">{currentSong?.name || 'Spotify Connect Active'}</p>
+              <p className="song-meta">
+                {isSpotifyMode && currentSong ? (
+                  `${currentArtistName || 'Spotify'} · ${currentAlbumName || 'Connect'}`
+                ) : (
+                  'Control playback from your Spotify app'
+                )}
+              </p>
+            </div>
+          </div>
+        ) : currentSong ? (
           <div className="now-playing-layout">
             {artworkUrl && !artworkUnavailable ? (
               <img
@@ -478,46 +556,48 @@ function QueuePage() {
                   </div>
                 </div>
               )}
-              <div className="now-playing-actions">
-                {isPaused ? (
+              {!isSpotifyMode && (
+                <div className="now-playing-actions">
+                  {isPaused ? (
+                    <button
+                      type="button"
+                      onClick={() => handleMediaAction(mediaResume)}
+                      disabled={actionLoading || !currentSong}
+                    >
+                      Resume
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleMediaAction(mediaPause)}
+                      disabled={actionLoading || isStopped}
+                    >
+                      Pause
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={() => handleMediaAction(mediaResume)}
-                    disabled={actionLoading || !currentSong}
-                  >
-                    Resume
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => handleMediaAction(mediaPause)}
+                    onClick={() => handleMediaAction(mediaStop)}
                     disabled={actionLoading || isStopped}
                   >
-                    Pause
+                    {isStopped ? 'Stopped' : 'Stop'}
                   </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => handleMediaAction(mediaStop)}
-                  disabled={actionLoading || isStopped}
-                >
-                  {isStopped ? 'Stopped' : 'Stop'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleMediaAction(mediaNextSong)}
-                  disabled={actionLoading || queueSongs.length === 0}
-                >
-                  Next Song
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleMediaAction(mediaEmptyQueue)}
-                  disabled={actionLoading || (!currentSong && queueSongs.length === 0)}
-                >
-                  Empty Queue
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => handleMediaAction(mediaNextSong)}
+                    disabled={actionLoading || queueSongs.length === 0}
+                  >
+                    Next Song
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleMediaAction(mediaEmptyQueue)}
+                    disabled={actionLoading || (!currentSong && queueSongs.length === 0)}
+                  >
+                    Empty Queue
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ) : (

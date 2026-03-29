@@ -424,6 +424,7 @@ function normalizeCurrentSong(item) {
 
   const rawPlayState = typeof item.playState === 'string' ? item.playState : '';
   const playState = rawPlayState.toUpperCase();
+  const audioSource = typeof item.audioSource === 'string' ? item.audioSource.toUpperCase() : 'LOCAL';
 
   return {
     id: item.mrl,
@@ -432,6 +433,7 @@ function normalizeCurrentSong(item) {
     artistName: item.artist ?? 'Unknown Artist',
     albumName: item.album ?? 'Unknown Album',
     playState,
+    audioSource,
   };
 }
 
@@ -597,4 +599,27 @@ export async function mediaEmptyQueue() {
   await fetchJson('/api/queue/empty', {
     method: 'POST',
   });
+}
+
+export async function activateSpotifyMode() {
+  await fetchJson('/api/media/spotify/activate', {
+    method: 'POST',
+  });
+}
+
+export async function deactivateSpotifyMode() {
+  await fetchJson('/api/media/spotify/deactivate', {
+    method: 'POST',
+  });
+}
+
+export async function getMediaSource() {
+  const data = await fetchJson('/api/media/source');
+  
+  if (typeof data === 'string') {
+    return data.toUpperCase();
+  }
+  
+  const source = data?.audioSource ?? data?.source ?? 'LOCAL';
+  return typeof source === 'string' ? source.toUpperCase() : 'LOCAL';
 }
